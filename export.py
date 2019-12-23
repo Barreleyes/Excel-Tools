@@ -39,7 +39,6 @@ def get_head_info(sheet):
     column_max=sheet.ncols
     head_info={}
     subkey_col=0
-    key_info=[]
     if 'key' not in sheet.cell(2,0).value:
         raise Exception("主键错误，配置表A3只能填写[all_key,client_key,server_key]")
     for i in range(0,column_max):
@@ -68,15 +67,10 @@ def get_head_info(sheet):
             if '_' in field_range_cell:
                 head_info[i]['key']=field_range_cell.split('_')[1]
                 if 'subkey' in field_range_cell:
-                    start=4
                     subkey_col=i
-                    for row in range(5,sheet.nrows):
-                        if sheet.cell(row,0).value !='' or row == sheet.nrows-1:
-                            key_info.append([start,row])
-                            start=row-1
             else:
                 head_info[i]['key']=''
-    return head_info,key_info,subkey_col
+    return head_info,subkey_col
 def get_key_info(sheet):
     '''
     sheet:sheet对象
@@ -84,9 +78,7 @@ def get_key_info(sheet):
     '''
     
 def gen_export_file(sheet):
-    head_info,,subkey_col=get_head_info(sheet)
-    if '    ' in head_info:
-        print('ha')
+    head_info,subkey_col=get_head_info(sheet)
     # 获取导出文件头尾
     text_head=export_lang.HEAD
     text_tail=export_lang.TAIL
@@ -115,7 +107,22 @@ def gen_export_file(sheet):
             export_file.write(item_text)
         pass
     export_file.write(text_tail)
-    
+    def item_process(id,row,col_start,col_end,head_info):
+        '''
+        :param id: 配置id
+        :param row: 配置所在行
+        :param col_start: 导出起始列
+        :param col_end: 导出结束列
+        :param head_info: 表头信息
+        导出配置数据
+        '''
+        item_id= item_id= '\"' + id +'\"' if isinstance(id,str) else int(id)
+        item_data=''
+        for column in range(col_start,col_end):
+            if head_info[column]:
+                item_data+=export_lang.value_format(head_info[column],sheet.cell(row,column).value)
+        item_data+='--subjoin--'
+        return export_lang.ITEM.format(id=item_id,data=item_data)
 b=get_sheet_list(workbook)
 # c=get_head_info(workbook.sheet_by_name('test'))
 gen_export_file(workbook.sheet_by_name('test'))

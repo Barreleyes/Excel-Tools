@@ -19,3 +19,6 @@ for file in a:
     print(file)
 for i in range(1,5):
     print(i)
+a=(5,10)
+for i in range(a[0],a[1]):
+    print(i)
