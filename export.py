@@ -38,11 +38,14 @@ def get_head_info(sheet):
     '''
     column_max=sheet.ncols
     head_info={}
+    mainkey_col=0
     subkey_col=0
+    
     if 'key' not in sheet.cell(2,0).value:
         raise Exception("主键错误，配置表A3只能填写[all_key,client_key,server_key]")
     for i in range(0,column_max):
         head_info[i]={}
+        key_info=[]
         field_name_cell=sheet.cell(1,i).value
         field_range_cell=sheet.cell(2,i).value
         default_value_cell=sheet.cell(3,i).value
@@ -64,49 +67,23 @@ def get_head_info(sheet):
                 pass
             head_info[i]['default']=default_value_cell
             head_info[i]['platform']=field_range_cell.split('_')[0]
-            if '_' in field_range_cell:
-                head_info[i]['key']=field_range_cell.split('_')[1]
-                if 'subkey' in field_range_cell:
-                    subkey_col=i
+            if '_key' in field_range_cell:
+                head_info[i]['key']='mainkey'
+                mainkey_col=i
+            elif '_subkey' in field_range_cell:
+                head_info[i]['key']='subkey'
+                subkey_col=i
+                start=4
             else:
                 head_info[i]['key']=''
-    return head_info,subkey_col
-def get_key_info(sheet):
-    '''
-    sheet:sheet对象
-    获取配置表单、双键结构，然后储存在数组中。
-    '''
+    if subkey_col!=0:
+        for row in range(5,sheet.nrows):
+            if sheet.cell(row,0).value !='' or row == sheet.nrows-1:
+                key_info.append([start,row])
+                start=row-1
+    return head_info,mainkey_col,subkey_col,key_info
     
 def gen_export_file(sheet):
-    head_info,subkey_col=get_head_info(sheet)
-    # 获取导出文件头尾
-    text_head=export_lang.HEAD
-    text_tail=export_lang.TAIL
-    # 生成导出文件路径及文件名
-    lua_name=export_path + '\\' + sheet.name + '.lua'
-    # 生成导出文件
-    def id_process(id):
-        '''
-        判断ID是整数还是字符串
-        '''
-        if isinstance(id,str):
-            return '\"' + id +'\"'
-        else:
-            return int(id)
-    export_file=open(lua_name,'w',encoding='utf-8')
-    export_file.write(text_head)
-    for row in range(4,sheet.nrows):       
-        item_id=id_process(sheet.cell(row,0).value)
-        item_data=''
-        # 生成一个配置项的数据
-        for column in range(1,sheet.ncols):
-            if head_info[column]:
-                item_data+=export_lang.value_format(head_info[column],sheet.cell(row,column).value)
-        item_text=export_lang.ITEM.format(id=item_id,data=item_data)
-        if item_id != '':
-            export_file.write(item_text)
-        pass
-    export_file.write(text_tail)
     def item_process(id,row,col_start,col_end,head_info):
         '''
         :param id: 配置id
@@ -116,13 +93,45 @@ def gen_export_file(sheet):
         :param head_info: 表头信息
         导出配置数据
         '''
-        item_id= item_id= '\"' + id +'\"' if isinstance(id,str) else int(id)
+        # 判断ID是整数还是字符串
+        item_id= item_id= '\"' + str(id) +'\"' if isinstance(id,str) else int(id)
         item_data=''
         for column in range(col_start,col_end):
             if head_info[column]:
                 item_data+=export_lang.value_format(head_info[column],sheet.cell(row,column).value)
-        item_data+='--subjoin--'
+        # 预留子key的替换项
+        # item_data+='--subjoin--'
         return export_lang.ITEM.format(id=item_id,data=item_data)
+    #获取表头信息
+    head_info,mainkey_col,subkey_col,key_info=get_head_info(sheet)
+    # subkey_col=sheet.ncols if subkey_col==0 else subkey_col
+    # 生成导出文件路径及文件名
+    lua_name=export_path + '\\' + sheet.name + '.lua'
+    # 生成导出文件
+    export_file=open(lua_name,'w',encoding='utf-8')
+    # 写入文件头
+    export_file.write(export_lang.HEAD)
+    #导出单键表
+    if subkey_col==0:
+        for row in range(4,sheet.nrows):
+            id=sheet.cell(row,mainkey_col).value
+            export_file.write(item_process(id,row,mainkey_col+1,sheet.ncols,head_info))
+    # 导出双键表
+    else:
+        item_text=''
+        for row in range(4,sheet.nrows):
+            id=sheet.cell(row,mainkey_col).value
+            if id !='':
+                export_file.write(item_text)
+                item_text+= item_process(id,row,mainkey_col+1,sheet.ncols,head_info)
+                
+            item_text.replace()
+        id=sheet.cell(row,subkey_col).value
+        item_text_subkey=item_process(id,row,subkey_col+1,sheet.ncols,head_info)
+        a=1
+            
+    # 写入文件尾
+    export_file.write(export_lang.TAIL)
 b=get_sheet_list(workbook)
 # c=get_head_info(workbook.sheet_by_name('test'))
 gen_export_file(workbook.sheet_by_name('test'))
