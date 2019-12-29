@@ -22,7 +22,5 @@
 # a=(5,10)
 # for i in range(a[0],a[1]):
 #     print(i)
-import xlrd
-a=xlrd.open_workbook('.\\test.xlsx').sheet_by_name("test")
-b=a.cell(5,0).value
-print(a.ncols)
+a='{{[{:.0f}]={{{aaa}}}}},\n'.format(1.0,aaa='{{bb}}')
+print(a.format(bb=4))

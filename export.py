@@ -4,7 +4,7 @@ import sys
 import data_checker
 import re
 # 读取文件
-sys.argv=['0','lua','.\\test.xlsx','.\\export']
+sys.argv=['0','lua','.\\test1.xlsx','.\\export']
 sys.path.append('.\\templete')
 export_format=sys.argv[1]
 excel_path=sys.argv[2]
@@ -38,14 +38,12 @@ def get_head_info(sheet):
     '''
     column_max=sheet.ncols
     head_info={}
+    key_info=[]
     mainkey_col=0
     subkey_col=0
-    
-    if 'key' not in sheet.cell(2,0).value:
-        raise Exception("主键错误，配置表A3只能填写[all_key,client_key,server_key]")
+    key_count=0
     for i in range(0,column_max):
         head_info[i]={}
-        key_info=[]
         field_name_cell=sheet.cell(1,i).value
         field_range_cell=sheet.cell(2,i).value
         default_value_cell=sheet.cell(3,i).value
@@ -59,28 +57,35 @@ def get_head_info(sheet):
             part=re.search(r'\[(.+)\](.+)',field_name_cell)
             head_info[i]['name']=part.group(2)
             head_info[i]['type']=part.group(1)
+            head_info[i]['default']=default_value_cell
+            head_info[i]['platform']=field_range_cell
             if head_info[i]['type'][0]=='a':
                 head_info[i]['count']=int(head_info[i]['type'][-1])
                 head_info[i]['type']=part.group(1)[:-1]
             else:
                 head_info[i]['count']=0
                 pass
-            head_info[i]['default']=default_value_cell
-            head_info[i]['platform']=field_range_cell.split('_')[0]
-            if '_key' in field_range_cell:
-                head_info[i]['key']='mainkey'
-                mainkey_col=i
-            elif '_subkey' in field_range_cell:
-                head_info[i]['key']='subkey'
-                subkey_col=i
-                start=4
-            else:
-                head_info[i]['key']=''
-    if subkey_col!=0:
+            if 'key' in head_info[i]['type']:
+                key_count+=1
+                if key_count==1:
+                    mainkey_col=i
+                elif key_count==2:
+                    subkey_col=i
+                    head_info[i]['type']+='_sub'
+    
+    if key_count==0:
+        raise Exception("单张配置表应至少有一个主键")
+    elif key_count==2:
+        start=4
         for row in range(5,sheet.nrows):
             if sheet.cell(row,0).value !='' or row == sheet.nrows-1:
-                key_info.append([start,row])
-                start=row-1
+                if row==sheet.nrows-1:
+                    key_info.append([start,row])
+                else:
+                    key_info.append([start,row-1])
+                    start=row
+    elif key_count>2:
+        raise Exception("单张配置表最多有两个键")
     return head_info,mainkey_col,subkey_col,key_info
     
 def gen_export_file(sheet):
@@ -94,13 +99,12 @@ def gen_export_file(sheet):
         导出配置数据
         '''
         # 判断ID是整数还是字符串
-        item_id= item_id= '\"' + str(id) +'\"' if isinstance(id,str) else int(id)
+        item_id= '\"' + str(id) +'\"' if isinstance(id,str) else int(id)
         item_data=''
         for column in range(col_start,col_end):
             if head_info[column]:
                 item_data+=export_lang.value_format(head_info[column],sheet.cell(row,column).value)
         # 预留子key的替换项
-        # item_data+='--subjoin--'
         return export_lang.ITEM.format(id=item_id,data=item_data)
     #获取表头信息
     head_info,mainkey_col,subkey_col,key_info=get_head_info(sheet)
@@ -118,18 +122,13 @@ def gen_export_file(sheet):
             export_file.write(item_process(id,row,mainkey_col+1,sheet.ncols,head_info))
     # 导出双键表
     else:
-        item_text=''
-        for row in range(4,sheet.nrows):
-            id=sheet.cell(row,mainkey_col).value
-            if id !='':
-                export_file.write(item_text)
-                item_text+= item_process(id,row,mainkey_col+1,sheet.ncols,head_info)
-                
-            item_text.replace()
-        id=sheet.cell(row,subkey_col).value
-        item_text_subkey=item_process(id,row,subkey_col+1,sheet.ncols,head_info)
-        a=1
-            
+        for item in key_info:
+            mainkey_item=item_process(sheet.cell(item[0],mainkey_col).value,item[0],mainkey_col+1,subkey_col+1,head_info)
+            subkey_item=''
+            for item_sub in range(item[0],item[1]):
+                subkey_item+=item_process(sheet.cell(item[0],subkey_col).value,item_sub,subkey_col+1,sheet.ncols,head_info)
+            mainkey_item=mainkey_item.replace('value_text',subkey_item)
+            export_file.write(mainkey_item)
     # 写入文件尾
     export_file.write(export_lang.TAIL)
 b=get_sheet_list(workbook)

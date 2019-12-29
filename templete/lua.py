@@ -22,6 +22,10 @@ def array_string(data):
     return '{' + output[:-1] + '}'
 def array_text(data):
     return array_string(data)
+def key_int(data):
+    return '[{:.0f}]=value_text,\n'.format(data)
+def key_string(data):
+    return '[{id}]=value_text,\n'.format(id=var_string(data))
 def dictionary(data):
     import re
     output=''
@@ -30,7 +34,7 @@ def dictionary(data):
         field_type=part.group(1)
         field_name='\"' +part.group(2) + '\"' if not part.group(2).isdigit() else part.group(2)
         filed_value=part.group(3)
-        output+='[{id}]={data},\n'.format(id=field_name,data=str(FIELD_TYPE[field_type](filed_value))) 
+        output+='[{id}]={data},'.format(id=field_name,data=str(FIELD_TYPE[field_type](filed_value))) 
     return '{' + output + '}'
 FIELD_TYPE={
     "n":var_number,
@@ -39,7 +43,11 @@ FIELD_TYPE={
     "an":array_number,
     "as":array_string,
     "at":array_text,
-    "d":dictionary
+    "d":dictionary,
+    "ikey":key_int,
+    "skey":key_string,
+    # "ikey_sub":key_int,
+    # "skey_sub":key_string
 }
 
 ITEM='[{id}]={{{data}}},\n'
@@ -56,6 +64,9 @@ def value_format(head_info,value):
     value_default=head_info['default']
     if value=='':
         value=value_default
-    formated_text=value_name +'=' + str(FIELD_TYPE[value_type](value))
+    if 'sub' in head_info['type']:
+        formated_text=value_name + '={value_text}'
+    else:
+        formated_text=value_name +'=' + str(FIELD_TYPE[value_type](value))
     return formated_text + ';\n'
 test='1;2;3|4;5;6'
