@@ -1,18 +1,8 @@
 import importlib
 import xlrd
-import sys
+import sys,os
 import data_checker
 import re
-# 读取文件
-sys.argv=['0','lua','.\\test1.xlsx','.\\export']
-sys.path.append('.\\templete')
-export_format=sys.argv[1]
-excel_path=sys.argv[2]
-export_path=sys.argv[3]
-workbook=xlrd.open_workbook(excel_path)
-# 导入输出文件格式模板
-export_lang=importlib.import_module(export_format)
-# field_type=export_lang.field_type
 # 获取excel配置表sheet列表，忽略说明，分割普通表和设置项。
 def get_sheet_list(workbook):
     '''
@@ -23,13 +13,12 @@ def get_sheet_list(workbook):
     horizon=[]
     for sheet in workbook.sheets():
         if sheet.name[0]=='@':
-            vertical.append(sheet.name[1:])
+            vertical.append(sheet.name)
         elif sheet.name[0]=='_':
             pass
         else:
             horizon.append(sheet.name)
     return vertical,horizon
-
 #获取表头文件信息
 def get_head_info(sheet):
     '''
@@ -86,9 +75,8 @@ def get_head_info(sheet):
                     start=row
     elif key_count>2:
         raise Exception("单张配置表最多有两个键")
-    return head_info,mainkey_col,subkey_col,key_info
-    
-def gen_export_file(sheet):
+    return head_info,mainkey_col,subkey_col,key_info  
+def gen_export_file_horizon(sheet):
     def item_process(id,row,col_start,col_end,head_info):
         '''
         :param id: 配置id
@@ -103,35 +91,61 @@ def gen_export_file(sheet):
         item_data=''
         for column in range(col_start,col_end):
             if head_info[column]:
-                item_data+=export_lang.value_format(head_info[column],sheet.cell(row,column).value)
+                item_data+=EXPORT_LANG.value_format(head_info[column],sheet.cell(row,column).value)
         # 预留子key的替换项
-        return export_lang.ITEM.format(id=item_id,data=item_data)
+        return EXPORT_LANG.ITEM.format(id=item_id,data=item_data)
     #获取表头信息
     head_info,mainkey_col,subkey_col,key_info=get_head_info(sheet)
-    # subkey_col=sheet.ncols if subkey_col==0 else subkey_col
     # 生成导出文件路径及文件名
-    lua_name=export_path + '\\' + sheet.name + '.lua'
+    lua_name=export_path + '\\' + WORKBOOK_NAME + '_' + sheet.name + EXPORT_LANG.FILE_TYPE
     # 生成导出文件
     export_file=open(lua_name,'w',encoding='utf-8')
     # 写入文件头
-    export_file.write(export_lang.HEAD)
+    export_file.write(EXPORT_LANG.HEAD)
     #导出单键表
     if subkey_col==0:
         for row in range(4,sheet.nrows):
             id=sheet.cell(row,mainkey_col).value
-            export_file.write(item_process(id,row,mainkey_col+1,sheet.ncols,head_info))
+            if id!='':
+                export_file.write(item_process(id,row,mainkey_col+1,sheet.ncols,head_info))
     # 导出双键表
     else:
         for item in key_info:
             mainkey_item=item_process(sheet.cell(item[0],mainkey_col).value,item[0],mainkey_col+1,subkey_col+1,head_info)
             subkey_item=''
-            for item_sub in range(item[0],item[1]):
-                subkey_item+=item_process(sheet.cell(item[0],subkey_col).value,item_sub,subkey_col+1,sheet.ncols,head_info)
+            for item_sub in range(item[0],item[1]+1):
+                id=sheet.cell(item_sub,subkey_col).value
+                if id!='':
+                    subkey_item+=item_process(id,item_sub,subkey_col+1,sheet.ncols,head_info)
             mainkey_item=mainkey_item.replace('value_text',subkey_item)
             export_file.write(mainkey_item)
     # 写入文件尾
-    export_file.write(export_lang.TAIL)
-b=get_sheet_list(workbook)
-# c=get_head_info(workbook.sheet_by_name('test'))
-gen_export_file(workbook.sheet_by_name('test'))
-print(b)
+    export_file.write(EXPORT_LANG.TAIL)
+    export_file.close()
+def gen_export_file_vertical(sheet):
+    lua_name=export_path + '\\' + WORKBOOK_NAME + '_' + sheet.name.replace('@','') + EXPORT_LANG.FILE_TYPE
+    export_file=open(lua_name,'w',encoding='utf-8')
+    export_file.write(EXPORT_LANG.HEAD)
+    for row in range(0,sheet.nrows):
+        part=re.search(r'\[(.+)\](.+)',sheet.cell(row,1).value)
+        key_info={'count':0,'default':0,'name':part.group(2),'platform':'all','type':part.group(1)}
+        export_file.write(EXPORT_LANG.value_format(key_info,sheet.cell(row,2).value))
+    export_file.write(EXPORT_LANG.TAIL)
+    export_file.close()
+def path_check(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+# 读取文件
+# sys.argv=['0','lua','.\\test_doublekey.xlsx','.\\export']
+sys.path.append('.\\templete')
+export_format=sys.argv[1]
+excel_path=sys.argv[2]
+export_path=sys.argv[3]
+path_check(export_path)
+workbook=xlrd.open_workbook(excel_path)
+WORKBOOK_NAME=os.path.split(excel_path)[1].split('.')[0]
+# 导入输出文件格式模板
+EXPORT_LANG=importlib.import_module(export_format)
+book_vertical,book_horizon=get_sheet_list(workbook)
+[gen_export_file_horizon(workbook.sheet_by_name(book)) for book in book_horizon]
+[gen_export_file_vertical(workbook.sheet_by_name(book)) for book in book_vertical]

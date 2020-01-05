@@ -46,8 +46,6 @@ FIELD_TYPE={
     "d":dictionary,
     "ikey":key_int,
     "skey":key_string,
-    # "ikey_sub":key_int,
-    # "skey_sub":key_string
 }
 
 ITEM='[{id}]={{{data}}},\n'
@@ -57,7 +55,7 @@ ARRAY_SPLITER_D1='|'
 ARRAY_SPLITER_D2=';'
 DICT_SPLITER_D1='|'
 DICT_SPLITER_D2='='
-
+FILE_TYPE='.lua'
 def value_format(head_info,value):
     value_name=head_info['name']
     value_type=head_info['type']
@@ -69,4 +67,3 @@ def value_format(head_info,value):
     else:
         formated_text=value_name +'=' + str(FIELD_TYPE[value_type](value))
     return formated_text + ';\n'
-test='1;2;3|4;5;6'
