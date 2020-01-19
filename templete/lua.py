@@ -1,5 +1,14 @@
+import math
+ITEM='[{id}]={{{data}}},\n'
+HEAD="return{\n"
+TAIL="\n}"
+ARRAY_SPLITER_D1='|'
+ARRAY_SPLITER_D2=';'
+DICT_SPLITER_D1='|'
+DICT_SPLITER_D2='='
+FILE_TYPE='.lua'
 def var_number(data):
-    return data
+    return int(data) if math.modf(data)[0] ==0 else data
 def var_string(data):
     return '\"' + str(data) + '\"'
 def var_text(data):
@@ -46,17 +55,10 @@ FIELD_TYPE={
     "d":dictionary,
     "ikey":key_int,
     "skey":key_string,
+    # "ikey_sub":key_int,
+    # "skey_sub":key_string
 }
-
-ITEM='[{id}]={{{data}}},\n'
-HEAD="return{\n"
-TAIL="\n}"
-ARRAY_SPLITER_D1='|'
-ARRAY_SPLITER_D2=';'
-DICT_SPLITER_D1='|'
-DICT_SPLITER_D2='='
-FILE_TYPE='.lua'
-def value_format(head_info,value):
+def dump(head_info,value):
     value_name=head_info['name']
     value_type=head_info['type']
     value_default=head_info['default']
@@ -67,3 +69,5 @@ def value_format(head_info,value):
     else:
         formated_text=value_name +'=' + str(FIELD_TYPE[value_type](value))
     return formated_text + ';\n'
+def dump_head_info(head_info):
+    pass

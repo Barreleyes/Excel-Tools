@@ -1,5 +1,8 @@
-
+import re
 def __excel_address_convert(old_address):
+    '''
+    将xlrd地址转换为excel地址
+    '''
     return [x+1 for x in old_address]
 def field_name(cell_address,field_type_range,data):
     '''

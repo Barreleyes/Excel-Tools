@@ -91,7 +91,7 @@ def gen_export_file_horizon(sheet):
         item_data=''
         for column in range(col_start,col_end):
             if head_info[column]:
-                item_data+=EXPORT_LANG.value_format(head_info[column],sheet.cell(row,column).value)
+                item_data+=EXPORT_LANG.dump(head_info[column],sheet.cell(row,column).value)
         # 预留子key的替换项
         return EXPORT_LANG.ITEM.format(id=item_id,data=item_data)
     #获取表头信息
@@ -102,6 +102,7 @@ def gen_export_file_horizon(sheet):
     export_file=open(lua_name,'w',encoding='utf-8')
     # 写入文件头
     export_file.write(EXPORT_LANG.HEAD)
+    
     #导出单键表
     if subkey_col==0:
         for row in range(4,sheet.nrows):
@@ -129,14 +130,14 @@ def gen_export_file_vertical(sheet):
     for row in range(0,sheet.nrows):
         part=re.search(r'\[(.+)\](.+)',sheet.cell(row,1).value)
         key_info={'count':0,'default':0,'name':part.group(2),'platform':'all','type':part.group(1)}
-        export_file.write(EXPORT_LANG.value_format(key_info,sheet.cell(row,2).value))
+        export_file.write(EXPORT_LANG.dump(key_info,sheet.cell(row,2).value))
     export_file.write(EXPORT_LANG.TAIL)
     export_file.close()
 def path_check(path):
     if not os.path.exists(path):
         os.makedirs(path)
 # 读取文件
-# sys.argv=['0','lua','.\\test_doublekey.xlsx','.\\export']
+sys.argv=['0','lua','.\\test_doublekey.xlsx','.\\export']
 sys.path.append('.\\templete')
 export_format=sys.argv[1]
 excel_path=sys.argv[2]
@@ -146,6 +147,7 @@ workbook=xlrd.open_workbook(excel_path)
 WORKBOOK_NAME=os.path.split(excel_path)[1].split('.')[0]
 # 导入输出文件格式模板
 EXPORT_LANG=importlib.import_module(export_format)
+# 导出水平表和垂直表
 book_vertical,book_horizon=get_sheet_list(workbook)
 [gen_export_file_horizon(workbook.sheet_by_name(book)) for book in book_horizon]
 [gen_export_file_vertical(workbook.sheet_by_name(book)) for book in book_vertical]
