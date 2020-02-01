@@ -17,6 +17,7 @@ SHEET_V_START_ROW=0 # 垂直表起始数据行
 SHEET_V_NAME_CN=0   # 垂直表表头-中文名
 SHEET_v_NAME_EN=1   # 垂直表表头-英文名&字段类型
 SHEET_v_VALUE=2     # 垂直表表头-值
+SHEET_HEAD_INFO=None
 def field_name_analyse(field_name):
     part=re.search(r'\[(.+)\](.+)',field_name)
     return part.group(2),part.group(1)
@@ -61,7 +62,6 @@ def load_head_info(sheet):
                 elif key_count==2:
                     subkey_col=i
                     head_info[i]['type']+='_sub'
-    
     if key_count==0:
         raise Exception("单张配置表应至少有一个主键")
     elif key_count==2:
@@ -75,6 +75,8 @@ def load_head_info(sheet):
                     start=row
     elif key_count>2:
         raise Exception("单张配置表最多有两个键")
+    global SHEET_HEAD_INFO
+    SHEET_HEAD_INFO=head_info
     return head_info,mainkey_col,subkey_col,group_info
 def load_sheet_horizon(sheet):
     '''
@@ -115,19 +117,23 @@ def load_sheet_vertical(sheet):
     return temp_data
 # 读取文件
 sys.argv=['0','lua','.\\test_doublekey.xlsx','.\\export']
-# sys.path.append('.\\templete')
+sys.path.append('.\\templete')
 export_format=sys.argv[1]
 excel_path=sys.argv[2]
 export_path=sys.argv[3]
 workbook=xlrd.open_workbook(excel_path)
-a=load_sheet_horizon(workbook.sheet_by_name("test"))
+import sheet_load
+a=sheet_load.SheetData(workbook.sheet_by_name("test"),0)
+a=sheet_load.SheetData
+a=1
 # import yaml
 # a=yaml.dump(a)
 # open('.\\1.yaml','w').write(a)
 # b=yaml.load(open('.\\1.yaml','r'))
 # print(b)
 # WORKBOOK_NAME=os.path.split(excel_path)[1].split('.')[0]
-import lua
-a=lua.dump(a)
-print(a)
-open('.\\teslua.lua','w',encoding='utf-8').write(a)
+# import lua
+# a=lua.dump(a)
+# print(a)
+# lua.dump_file(a,'.\\','test')
+# open('.\\teslua.lua','w',encoding='utf-8').write(a)

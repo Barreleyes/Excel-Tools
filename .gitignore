@@ -7,3 +7,4 @@ __pycache__/data_checker.cpython-38.pyc
 templete/__pycache__/lua.cpython-36.pyc
 templete/__pycache__/lua.cpython-38.pyc
 *.pyc
+*.lua
