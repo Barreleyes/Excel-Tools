@@ -2,7 +2,7 @@ file_format='.lua'
 __head="--ENCODING: UTF-8--\nreturn{\n"
 __tail="}"
 __temp_obj = None
-def dump(data):
+def dumps(data):
     def dump_function(data):
         global __temp_obj
         __temp_obj += data

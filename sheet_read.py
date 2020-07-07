@@ -54,7 +54,6 @@ def load_head_info(sheet):
                 head_info[i]['type']=field_type[:-1]
             else:
                 head_info[i]['count']=0
-                pass
             if 'key' in head_info[i]['type']:
                 key_count+=1
                 if key_count==1:

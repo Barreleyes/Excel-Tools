@@ -17,31 +17,31 @@ def array_process(data,var_type):
             if i !='':
                 new_data.append(var_type(i))
     return new_data
-def var_int(data):
+def var_int(data,count=1):
     return int(data)
-def var_float(data):
+def var_float(data,count=1):
     return int(float(data)*1000000)
-def var_number(data):
+def var_number(data,count=1):
     return int(data) if math.modf(float(data))[0] ==0 else float(data)
-def var_string(data):
+def var_string(data,count=1):
     return str(data)
-def var_text(data):
+def var_text(data,count=1):
     return str(data)
-def array_int(data):
+def array_int(data,count=1):
     return array_process(data,var_int)
-def array_float(data):
+def array_float(data,count=1):
     return array_process(data,var_float)
-def array_number(data):
+def array_number(data,count=1):
     return array_process(data,var_number)
-def array_string(data):
+def array_string(data,count=1):
     return array_process(data,str)
-def array_text(data):
+def array_text(data,count=1):
     return array_process(data,var_text)    
-def key_int(data):
+def key_int(data,count=1):
     return int(data)
-def key_string(data):
+def key_string(data,count=1):
     return str(data)
-def dictionary(data):
+def dictionary(data,count=1):
     import re
     output={}
     for element in data.split(dict_spliter_d1):
@@ -65,7 +65,4 @@ process_type={
     "d":dictionary,
     "ikey":key_int,
     "skey":key_string,
-    "ikey_sub":key_int,
-    "skey_sub":key_string,
 }
-print(dictionary('[f]as=1.5|[i]bb=2'))

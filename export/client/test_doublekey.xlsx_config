@@ -1,0 +1,4 @@
+--ENCODING: UTF-8--
+return{
+	LastTime = 100,
+}
