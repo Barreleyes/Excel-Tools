@@ -51,14 +51,15 @@ class Work:
         Work.OutputPath.server = args.output_server
         Work.OutputFormat.client = args.format_client
         Work.OutputFormat.server = args.format_server
-        if os.path.isfile(path) and (file_name:=path.split('.')[-1] in Work.VALID_INPUT_FORMAT):
-            Work.book_list[file_name]=path
+        if os.path.isfile(path) and path.split('.')[-1] in Work.VALID_INPUT_FORMAT:
+            name=os.path.split(path)[1].split('.')[0]
+            Work.book_list[name]=path
         elif os.path.isdir(path):
             for maindir, subdir, file_name_list in os.walk(path):
-                for filename in file_name_list:
-                    full_path = os.path.join(maindir, filename)
-                    if file_name:=full_path.split('.')[-1] in Work.VALID_INPUT_FORMAT:
-                        Work.book_list[file_name]=full_path
+                for _file in file_name_list:
+                    full_path = os.path.join(maindir, _file)
+                    if _file.split('.')[-1] in Work.VALID_INPUT_FORMAT:
+                        Work.book_list[_file.split('.')[0]]=full_path
         def set_format(format_type):
             if format_type == 'lua':
                 from Format import lua

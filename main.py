@@ -4,9 +4,9 @@ import xlrd
 import sheet_load
 import current
 import localization
-# 创建外部参数解析器
+# 创建外部参数解析器test_doublekey.xlsx
 parser = argparse.ArgumentParser()
-parser.add_argument('-i', '--input', default='.\\test_xlsx\\test_doublekey.xlsx',
+parser.add_argument('-i', '--input', default='.\\test_xlsx\\',
                     help="excel文件或文件夹路径，默认读取【工具目录】")
 parser.add_argument('-oc', '--output-client', default='.\\export\\client\\',
                     help="前端导出文件路径，默认在【工具目录\\export\\client】文件夹")
