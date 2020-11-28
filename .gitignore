@@ -1,0 +1,7 @@
+
+*.pyc
+TestFile/test.py
+Localization.db
+*.lua
+*.json
+*.xlsx

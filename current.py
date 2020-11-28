@@ -61,7 +61,7 @@ class Work:
                         Work.book_list[file_name]=full_path
         def set_format(format_type):
             if format_type == 'lua':
-                import lua
+                from Format import lua
                 return lua.dumps
             elif format_type == 'yaml':
                 import yaml

@@ -1,6 +1,6 @@
 import re
 from data_process import process_type as field_type_range
-import common
+import current
 exception_collector = []
 
 def field_name():
