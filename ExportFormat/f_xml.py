@@ -1,8 +1,8 @@
-#coding:utf-8
-#字典转化为xml
+# coding:utf-8
+# 字典转化为xml
 from xml.etree.ElementTree import Element, SubElement, tostring
 from xml.dom.minidom import parseString
-#定义一个对象，在python中叫字典dict
+# 定义一个对象，在python中叫字典dict
 myobjects = {
     'key1': {
         'key11': 'value11',
@@ -20,9 +20,9 @@ myobjects = {
     },
 }
 
-objects = Element('objects')  #根节点
-for isbn, info in myobjects.items():  #迭代每一个属性，属性和值（这里的每个值都是另一个对象）
-    object = SubElement(objects, isbn)  #创建子节点
+objects = Element('objects')  # 根节点
+for isbn, info in myobjects.items():  # 迭代每一个属性，属性和值（这里的每个值都是另一个对象）
+    object = SubElement(objects, isbn)  # 创建子节点
     for key, val in info.items():
         SubElement(object, key).text = ', '.join(str(val).split(':'))
 
