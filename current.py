@@ -1,6 +1,7 @@
 import re
 import xlrd
 import os
+import sqlite3
 
 def _clear(attri:list,value):
     for i in range(0,len(attri)):
@@ -30,6 +31,7 @@ class Work:
     version = ''
     VALID_INPUT_FORMAT = ['xlsx', 'xlsm', 'xls']
     book_list = {}
+    localization:sqlite3.Connection
 
     class OutputPath:
         client = ''
@@ -51,6 +53,7 @@ class Work:
         Work.OutputPath.server = args.output_server
         Work.OutputFormat.client = args.format_client
         Work.OutputFormat.server = args.format_server
+        # 初始化要导出的文件列表
         if os.path.isfile(path) and path.split('.')[-1] in Work.VALID_INPUT_FORMAT:
             name=os.path.split(path)[1].split('.')[0]
             Work.book_list[name]=path
@@ -60,9 +63,15 @@ class Work:
                     full_path = os.path.join(maindir, _file)
                     if _file.split('.')[-1] in Work.VALID_INPUT_FORMAT:
                         Work.book_list[_file.split('.')[0]]=full_path
+        # 初始化本地化内容
+        Work.localization = sqlite3.connect(os.path.realpath(Work.OutputPath.client + "..\Localization.db"))
+        Work.localization.execute("""create table if not exists Localization (
+            key text primary key,
+            version text,
+            zh_CN text)""")
         def set_format(format_type):
             if format_type == 'lua':
-                from Format import lua
+                from format import lua
                 return lua.dumps
             elif format_type == 'yaml':
                 import yaml

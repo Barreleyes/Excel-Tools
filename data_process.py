@@ -5,14 +5,6 @@ array_spliter_d1 = '|'
 array_spliter_d2 = ';'
 dict_spliter_d1 = '#'
 dict_spliter_d2 = '='
-# 创建多语言数据库
-localization = sqlite3.connect("./Localization.db")
-localization.execute("""create table if not exists Localization (
-key text primary key,
-version text,
-zh_CN text)""")
-
-
 def array_process(data, var_type):
     new_data = []
     current.Cell.array_index = [0, 0]
@@ -52,10 +44,9 @@ def var_string(data):
 
 def var_text(data):
     key = current.text_key_str()
-    localization.execute(
-        "INSERT OR REPLACE into Localization (key,version,zh_CN) values ('%s','%s','%s')" % (key, current.Work.version,str(data)))
-    localization.commit()
-    # multilingual.insert_data(key, str(data))
+    current.Work.localization.execute(
+        "INSERT OR REPLACE into Localization (key,version,default) values ('%s','%s','%s')" % (key, current.Work.version,str(data)))
+    current.Work.localization.commit()
     return key
 
 
