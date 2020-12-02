@@ -6,7 +6,6 @@ import xlrd
 import data_process
 import data_checker
 import current
-
 sheet = current.Sheet
 
 

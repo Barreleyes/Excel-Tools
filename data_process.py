@@ -1,5 +1,4 @@
 import math
-import sqlite3
 import current
 array_spliter_d1 = '|'
 array_spliter_d2 = ';'
