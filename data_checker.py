@@ -1,6 +1,6 @@
 import re
-from data_process import process_type as field_type_range
-import current
+from data_processor import process_type as field_type_range
+import data_loader
 exception_collector = []
 
 def field_name():
