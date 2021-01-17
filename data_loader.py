@@ -3,6 +3,7 @@ import xlrd
 import os
 import sqlite3
 import data_processor
+import data_checker
 
 def _clear(attri:list,value):
     for i in range(0,len(attri)):
@@ -16,15 +17,14 @@ class _Head:
     count = 1
     stage = ''
     default = ''
-    def __init__(self,head_config,data_raw):
-        self.name_cn=data_raw[head_config['name_cn']]
-        if data_raw[head_config['name']]!='':
+    def __init__(self,head_data_raw):
+        self.name_cn=head_data_raw['name_cn']
+        if head_data_raw['name']!='':
             part = re.findall(r'\[([a-zA-Z]+)([0-9]*)\](.+)',
-                        data_raw[head_config['name']])[0]
+                        head_data_raw['name'])[0]
             self.type, self.count, self.name = part[0], 1 if (
                 n := part[1]) == '' else int(n), part[2]
-            self.stage, self.default = data_raw[head_config['stage']
-                                            ], data_raw[head_config['default']]
+            self.stage, self.default = head_data_raw['stage'], head_data_raw['default']
         else:
             self.type='remark'
             self.name=self.count=self.stage=self.default=''
@@ -137,22 +137,30 @@ class Sheet:
             Sheet.name= sheet.name[1:]
             Sheet.type='Lite'
             Sheet.data_start_row=1
-            Sheet.head_config={'name_cn': 0, 'name': 1, 'stage': 2, 'default': 3}
             # 更新表头信息
             for i in range(1,Sheet.row_max):
-                sheet_head=Sheet.obj.row_values(i, 0, 4)
-                head_data_raw={'name_cn': sheet_head[0], 'name': sheet_head[1], 'stage': sheet_head[2], 'default': sheet_head[3]}
-                Sheet.heads.append(_Head(Sheet.head_config,Sheet.obj.row_values(i, 0, len(Sheet.head_config))))
-            Sheet.data_range=[[Sheet.data_start_row,Sheet.head_config['default']],[Sheet.row_max,Sheet.head_config['default']+1]]
+                head_data_raw={
+                    'name_cn': Sheet.obj.cell(i,0).value,
+                    'name': Sheet.obj.cell(i,1).value,
+                    'stage': Sheet.obj.cell(i,2).value,
+                    'default': Sheet.obj.cell(i,3).value}
+                data_checker.check_head(head_data_raw) #检查表头数据原值
+                Sheet.heads.append(_Head(head_data_raw))
+            Sheet.data_range=[[Sheet.data_start_row,3],[Sheet.row_max,4]]
         # 普通配置表
         else:
             Sheet.name= sheet.name
             Sheet.type='Normal_SingleKey'
             Sheet.data_start_row=4
-            Sheet.head_config={'name_cn': 0, 'name': 1, 'stage': 2, 'default': 3}
             # 更新表头信息
             for i in range(0,Sheet.col_max):
-                Sheet.heads.append(_Head(Sheet.head_config,Sheet.obj.col_values(i, 0, len(Sheet.head_config))))
+                head_data_raw={
+                    'name_cn': Sheet.obj.cell(0,i).value,
+                    'name': Sheet.obj.cell(1,i).value,
+                    'stage': Sheet.obj.cell(2,i).value,
+                    'default': Sheet.obj.cell(3,i).value}
+                data_checker.check_head(head_data_raw) #检查表头数据原值
+                Sheet.heads.append(_Head(head_data_raw))
                 if Sheet.heads[-1].type[1:]=='key':
                     if Sheet.master_key_col==-1:
                         Sheet.master_key_col=i
@@ -160,6 +168,8 @@ class Sheet:
                         Sheet.sub_key_col=i
                         Sheet.sub_key_name=Sheet.heads[-1].name
                         Sheet.type='Normal_DoubleKey'
+                    else:
+                        data_checker.too_many_keys(head_data_raw['name_cn'])
             Sheet.data_range=[[Sheet.data_start_row,Sheet.master_key_col],[Sheet.row_max,Sheet.col_max]]
                     
 
@@ -193,13 +203,15 @@ class Cell:
             Cell.head=Sheet.heads[xlrd_row-Sheet.data_start_row]
             Cell.value_raw=Cell.head.default
             Cell.master_key=Cell.head.name
+            data_checker.check_data_type(Cell.value_raw,Cell.head._type) #检查值
             Cell.value=data_processor.process_type[Cell.head.type](Cell.value_raw)
             update_dict(Sheet.data_client,[Cell.master_key],Cell.value)
         else:
             Cell.head=Sheet.heads[xlrd_col]
             if Cell.head.type!='remark':
                 Cell.value_raw=Sheet.obj.cell(xlrd_row,xlrd_col).value
-                Cell.value=data_processor.process_type[Cell.head.type](Cell.value_raw)
+                data_checker.check_data_type(Cell.value_raw,Cell.head._type)
+                Cell.value=data_processor.process_type[Cell.head.type](Cell.value_raw) #检查值
                 Cell.master_key=data_processor.process_type[Sheet.heads[Sheet.master_key_col].type](Sheet.obj.cell(xlrd_row, Sheet.master_key_col).value)
                 if Sheet.type=='Normal_SingleKey':
                     Cell.sub_key=-1
