@@ -95,7 +95,6 @@ def dictionary(data):
     data_loader.Cell.dict_key= ''
     return output
 
-
 process_type = {
     "i": var_int,
     "f": var_float,

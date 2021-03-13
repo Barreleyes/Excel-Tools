@@ -203,14 +203,14 @@ class Cell:
             Cell.head=Sheet.heads[xlrd_row-Sheet.data_start_row]
             Cell.value_raw=Cell.head.default
             Cell.master_key=Cell.head.name
-            data_checker.check_data_type(Cell.value_raw,Cell.head._type) #检查值
+            data_checker.check_data_type(Cell.value_raw,Cell.head.type) #检查值
             Cell.value=data_processor.process_type[Cell.head.type](Cell.value_raw)
             update_dict(Sheet.data_client,[Cell.master_key],Cell.value)
         else:
             Cell.head=Sheet.heads[xlrd_col]
             if Cell.head.type!='remark':
                 Cell.value_raw=Sheet.obj.cell(xlrd_row,xlrd_col).value
-                data_checker.check_data_type(Cell.value_raw,Cell.head._type)
+                data_checker.check_data_type(Cell.value_raw,Cell.head.type)
                 Cell.value=data_processor.process_type[Cell.head.type](Cell.value_raw) #检查值
                 Cell.master_key=data_processor.process_type[Sheet.heads[Sheet.master_key_col].type](Sheet.obj.cell(xlrd_row, Sheet.master_key_col).value)
                 if Sheet.type=='Normal_SingleKey':

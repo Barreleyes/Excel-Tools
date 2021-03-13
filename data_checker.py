@@ -40,9 +40,9 @@ def check_head(head_data_raw):
         update_exception('104',head_data_raw['name_cn'])
     elif parse[0] not in data_processor.process_type:
         update_exception('103',head_data_raw['name_cn'])
-    if parse[3]=='':
+    if parse[2]=='':
         update_exception('105',head_data_raw['name_cn'])
-    elif (not parse[3].isascii()) or (not parse[3][0].isalpha()):
+    elif (not parse[2].isascii()) or (not parse[2][0].isalpha()):
         update_exception('106',head_data_raw['name_cn'])
     if not head_data_raw['stage'] in ['all','client','server']:
         update_exception('111',head_data_raw['name_cn'])
@@ -60,30 +60,23 @@ def check_data_type(data_raw:str,_type):
                 r=False
                 break
         return r
-    def check_arrayint(data):
+    def check_array_number(data):
         r=True
         for i in re.split('[;|]',data):
             if not i.isdigit():
                 r=False
                 break
         return r
-
-    data_type = {
-        "i": data_raw.isdigit(),
-        "f": data_raw.isdigit(),
-        "n": data_raw.isdigit(),
-        "s": True,
-        "t": True,
-        "ai": check_arrayint(data_raw),
-        "af": check_arrayint(data_raw),
-        "an": check_arrayint(data_raw),
-        "as": str_contain(data_raw,[';','|']),
-        "at": str_contain(data_raw,[';','|']),
-        "d": str_contain(data_raw,['#','=']),
-        "ikey": data_raw.isdigit(),
-        "skey": not data_raw.isdigit(),
-    }
-    return data_type[_type]
+    if _type in ['i','f','n','ikey']:
+        return type(data_raw)==float
+    elif _type in ['s','t']:
+        return True
+    elif _type[0:2] in ['ai','af','an']:
+        return check_array_number(data_raw)
+    elif _type[0:2] in ['as','at']:
+        return str_contain(data_raw,[';','|'])
+    elif _type=='d':
+        return str_contain(data_raw,['#','='])
 
 def check_master_key(key):
     if key in data_loader.Sheet.data_client.keys():

@@ -5,3 +5,10 @@ Localization.db
 *.lua
 *.json
 *.xlsx
+.idea/dataSources.xml
+.idea/dbnavigator.xml
+.idea/Excel2Lua.iml
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
